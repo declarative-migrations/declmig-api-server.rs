@@ -1,0 +1,17 @@
+# flags-2-env surface for `declmig-api`
+[flags.config]
+env = "DECLMIG_CONFIG"
+long = "config"
+help = "Path to TOML configuration"
+
+[flags.api_base]
+env = "DECLMIG_API_BASE"
+long = "api-base"
+help = "API HTTP base URL"
+
+[flags.json]
+env = "DECLMIG_JSON"
+long = "json"
+switch = true
+help = "Emit JSON"
+
