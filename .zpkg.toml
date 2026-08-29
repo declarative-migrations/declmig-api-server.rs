@@ -2,3 +2,6 @@ name = "declmig-api-server.rs"
 kind = "api-server"
 version = "0.1.0"
 
+[dependencies]
+"declarative-migrations/declmig-lib-core" = "^0.1.0"
+"declarative-migrations/declmig-orm-core" = "^0.1.0"
