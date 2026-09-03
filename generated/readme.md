@@ -1,29 +1,35 @@
 # Generated output — do not edit directly
 
-Everything in this directory except this notice is derivative output. Existing file headers and `.cli-flags.toml`, where applicable, identify the current operational generator inputs. Edit repository-owned source inputs and regenerate instead of patching Dart, Gleam, Rust, TypeScript, schema, or documentation output by hand.
+Everything in this directory except this notice is derivative output. Change the human-authored source, run the owning generator, and review the complete regenerated diff. Do not patch a language-specific artifact by hand.
 
-## Contract authority
+## Current source map
 
-TypeSpec and JSON Schema/OpenAPI are independent, human-authored peer authorities for semantic cross-language contracts. Neither may be generated from the other as the ultimate source of truth. A generated contract change is mergeable only when both authorities change together, their normalized outputs agree, and a machine-readable reconciliation receipt is committed under `../contracts/parity/`.
+The committed Dart, Gleam, Rust, and TypeScript `env` and `runtime` files are configuration projections generated from the repository-root `.cli-flags.toml` catalog by the flags-2-env toolchain. `.cli-flags.toml` remains the authority for those CLI/environment settings.
 
-A schema placed below `generated/` is still derivative output and never counts as the human-authored JSON Schema/OpenAPI authority. The generated-policy workflow enforces these requirements for future generated changes. Existing output predates the complete peer-authority migration and must not be represented as already compliant.
+A CLI/environment catalog is not an application-domain, IPC, or network protocol. It therefore does **not** require a duplicate TypeSpec model merely to satisfy a file-layout rule. The generated-policy workflow treats this configuration projection separately and requires `.cli-flags.toml` to change whenever those files change.
+
+## Semantic cross-language contracts
+
+When this tree contains generated migration models, persisted interchange, local IPC, or remote wire types, TypeSpec and JSON Schema/OpenAPI must be independent, human-authored peer authorities. Neither may be generated from the other as the ultimate source of truth. Their independently generated normalized outputs must agree, and a machine-readable reconciliation receipt must be committed under `../contracts/parity/` before derivative output changes are mergeable.
+
+A JSON Schema placed below `generated/` is itself derivative output and does not count as the human-authored JSON Schema/OpenAPI authority. Public/client, private/server-only, edge-only, and isomorphic contract surfaces remain separated in the authority sources.
 
 ## Service boundary
 
-Generated bindings or documentation do not replace the Rust service implementation and do not imply that every process exposes a public API. Public, internal/server-only, edge-only, and client-visible contracts must remain explicitly separated in the authority sources.
+Generated bindings or documentation do not replace the Rust service implementation and do not imply that every process exposes a public API.
 
 ## Regenerate and freeze
 
-Before regeneration, temporarily make the tree writable:
+Temporarily thaw only this tree before running the documented generator:
 
 ```sh
 chmod -R u+w generated
 ```
 
-Run the documented generator, review the full diff, then make the tree read-only again:
+After regeneration and review, freeze it locally:
 
 ```sh
 find generated -depth -exec chmod a-w {} +
 ```
 
-Git persists only the regular-versus-executable distinction, not arbitrary owner-write bits. A fresh checkout can therefore be writable even when a working tree was frozen locally. CI is the durable merge control; `chmod a-w` is an additional local deterrent.
+Git stores the regular-versus-executable bit, not arbitrary owner-write bits. A fresh checkout therefore restores ordinary files as writable even if a prior working tree used mode `0444`. CI is the durable merge control; `chmod a-w` is a checkout-local deterrent and is reapplied by the generated-source policy workflow.
