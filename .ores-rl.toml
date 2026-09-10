@@ -1,3 +1,5 @@
+# Contract: ores-rate-limit/ores-rl-interfaces@241353d0f5269450690d9646be03db2aba59a2ae
+# Existing strict Redis enforcement policy preserved during fleet adoption.
 schemaVersion = "ores.rate-limit.config.v1"
 layout = "server-only"
 defaultPolicyId = "api-default"
