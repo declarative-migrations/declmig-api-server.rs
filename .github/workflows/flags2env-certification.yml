@@ -1,0 +1,38 @@
+name: flags2env-certification
+
+on:
+  pull_request:
+    paths:
+      - ".cli-flags.toml"
+      - "Cargo.toml"
+      - "src/flags.rs"
+      - "tests/flags2env_contract.rs"
+      - ".github/workflows/flags2env-certification.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".cli-flags.toml"
+      - "Cargo.toml"
+      - "src/flags.rs"
+      - "tests/flags2env_contract.rs"
+      - ".github/workflows/flags2env-certification.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  certify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Execute dependency-independent flags contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustc --version
+          CARGO_MANIFEST_DIR="$PWD" rustc --edition=2021 --test tests/flags2env_contract.rs -o "$RUNNER_TEMP/flags2env-contract"
+          "$RUNNER_TEMP/flags2env-contract" --nocapture
