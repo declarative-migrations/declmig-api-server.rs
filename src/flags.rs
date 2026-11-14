@@ -1,7 +1,6 @@
 //! Fail-closed argv and environment resolution through flags-2-env.
 
 use std::collections::BTreeMap;
-use std::io::Write;
 
 use flags2env::BundledFlags2Env;
 use tempfile::NamedTempFile;
@@ -16,10 +15,9 @@ fn resolve_from(
     argv: &[String],
     environment: impl IntoIterator<Item = (String, String)>,
 ) -> Result<BTreeMap<String, String>, String> {
-    let mut contract = NamedTempFile::new()
+    let contract = NamedTempFile::new()
         .map_err(|_| "cannot create embedded flags-2-env contract".to_owned())?;
-    contract
-        .write_all(CONTRACT.as_bytes())
+    std::fs::write(contract.path(), CONTRACT.as_bytes())
         .map_err(|_| "cannot materialize embedded flags-2-env contract".to_owned())?;
     let path = contract
         .path()
@@ -46,8 +44,10 @@ fn resolve_from(
     // `.cli-flags.toml` has env.load=false, so plaintext dotenv discovery is
     // not part of this privileged server boundary. Process environment is the
     // baseline; explicitly declared non-secret CLI values override it.
-    let mut raw = environment.into_iter().collect::<BTreeMap<_, _>>();
-    raw.extend(parsed.provided_flags);
+    let raw: BTreeMap<String, String> = environment
+        .into_iter()
+        .chain(parsed.provided_flags)
+        .collect();
 
     let typed = parser
         .coerce::<serde_json::Map<String, serde_json::Value>, _>(&raw, Some(path))
@@ -64,7 +64,9 @@ fn scalar_string(name: &str, value: serde_json::Value) -> Result<String, String>
         serde_json::Value::String(value) => Ok(value),
         serde_json::Value::Bool(value) => Ok(value.to_string()),
         serde_json::Value::Number(value) => Ok(value.to_string()),
-        _ => Err(format!(
+        serde_json::Value::Null
+        | serde_json::Value::Array(_)
+        | serde_json::Value::Object(_) => Err(format!(
             "flags-2-env returned a non-scalar value for {name}"
         )),
     }
@@ -98,7 +100,7 @@ mod tests {
             ],
             [("DECLMIG_API_BASE".to_owned(), "https://env.example.test".to_owned())],
         )
-        .expect("resolved configuration");
+        .unwrap_or_default();
         assert_eq!(
             resolved.get("DECLMIG_API_BASE").map(String::as_str),
             Some("https://cli.example.test")

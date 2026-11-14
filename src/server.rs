@@ -5,9 +5,12 @@ use crate::routes;
 
 pub fn run(config: &ApiConfig) {
     println!("api bind {}", config.bind);
-    println!(
-        "{}",
-        serde_json::to_string(&routes::health::body()).expect("health json")
-    );
+    match serde_json::to_string(&routes::health::body()) {
+        Ok(body) => println!("{body}"),
+        Err(_) => {
+            eprintln!("cannot serialize API health payload");
+            std::process::exit(1);
+        }
+    }
 }
 

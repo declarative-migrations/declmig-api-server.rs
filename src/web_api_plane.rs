@@ -19,7 +19,12 @@ pub const ORG_SLUG: &str = "declmig";
 pub const DNS_ZONE: &str = "declarative-migrations.dev";
 
 pub fn identity() -> OrgIdentity {
-    OrgIdentity::new(GITHUB_ORG, ORG_SLUG, DNS_ZONE).expect("catalog identity is valid")
+    match OrgIdentity::new(GITHUB_ORG, ORG_SLUG, DNS_ZONE) {
+        Ok(identity) => identity,
+        Err(_) => {
+            std::process::exit(2);
+        }
+    }
 }
 
 pub fn capabilities() -> DataPlaneCapabilities {
@@ -58,7 +63,7 @@ mod tests {
 
     #[test]
     fn four_avenues_are_named_and_fail_closed() {
-        validate_four_avenues().expect("four-avenue policies");
+        assert!(validate_four_avenues().is_ok());
         let caps = capabilities();
         assert_eq!(caps.app_host, format!("app.{DNS_ZONE}"));
         assert_eq!(caps.api_host, format!("api.{DNS_ZONE}"));

@@ -35,6 +35,18 @@ pub const SERVICE_SLUG: &str = "declmig";
 /// Environment prefix for every variable this service reads.
 pub const ENV_PREFIX: &str = "DECLMIG";
 
+/// Typed startup failures. Never leak transport connection strings or
+/// driver-formatted errors, which may contain service credentials.
+#[derive(Debug, thiserror::Error)]
+pub enum TransportStartupError {
+    #[error("could not load NATS transport configuration")]
+    Configuration,
+    #[error("could not establish NATS transport connection")]
+    Connection,
+    #[error("JetStream worker failed")]
+    JetStream,
+}
+
 /// The route that accepts an envelope on avenue 2.
 pub const ENVELOPE_PATH: &str = "/v1/operations";
 
@@ -93,12 +105,14 @@ pub async fn serve_stateful<O, T>(
 pub async fn serve_asynchronous<O, T>(
     context: ores_transport::async_nats::jetstream::Context,
     handler: Arc<dyn OperationHandler<O, T>>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+) -> Result<(), TransportStartupError>
 where
     O: DeserializeOwned + Send + Sync,
     T: Serialize + Send,
 {
-    ores_transport::serve_jetstream(context, subjects(), handler).await
+    ores_transport::serve_jetstream(context, subjects(), handler)
+        .await
+        .map_err(|_| TransportStartupError::JetStream)
 }
 
 /// Open the JetStream context for avenue 4 from `DECLMIG_NATS_URL`.
@@ -106,12 +120,16 @@ where
 /// # Errors
 /// [`ores_transport::TransportError::Upstream`] if NATS is unreachable.
 pub async fn jetstream_from_env()
--> Result<Option<ores_transport::async_nats::jetstream::Context>, Box<dyn std::error::Error + Send + Sync>>
+-> Result<Option<ores_transport::async_nats::jetstream::Context>, TransportStartupError>
 {
-    let config = ores_transport::TransportConfig::from_env(ENV_PREFIX)?;
+    let config = ores_transport::TransportConfig::from_env(ENV_PREFIX)
+        .map_err(|_| TransportStartupError::Configuration)?;
     match config.nats_url.as_deref() {
         None => Ok(None),
-        Some(url) => Ok(Some(ores_transport::connect_nats(url).await?)),
+        Some(url) => ores_transport::connect_nats(url)
+            .await
+            .map(Some)
+            .map_err(|_| TransportStartupError::Connection),
     }
 }
 
