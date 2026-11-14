@@ -22,7 +22,6 @@ pub fn identity() -> OrgIdentity {
     match OrgIdentity::new(GITHUB_ORG, ORG_SLUG, DNS_ZONE) {
         Ok(identity) => identity,
         Err(_) => {
-            eprintln!("invalid built-in data-plane identity");
             std::process::exit(2);
         }
     }
