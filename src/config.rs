@@ -65,10 +65,11 @@ mod endpoint_tests {
 
     #[test]
     fn valid_ipv4_ipv6_and_nats_endpoints() {
-        let mut env = BTreeMap::new();
-        env.insert("DECLMIG_API_BIND".into(), "[::1]:8080".into());
-        env.insert("DECLMIG_API_TCP_BIND".into(), "127.0.0.1:9090".into());
-        env.insert("DECLMIG_NATS_URL".into(), "tls://nats.internal:4222".into());
+        let env = BTreeMap::from([
+            ("DECLMIG_API_BIND".into(), "[::1]:8080".into()),
+            ("DECLMIG_API_TCP_BIND".into(), "127.0.0.1:9090".into()),
+            ("DECLMIG_NATS_URL".into(), "tls://nats.internal:4222".into()),
+        ]);
         assert!(ApiConfig::from_map(&env).validate().is_ok());
         assert!(ApiConfig::from_map(&BTreeMap::new()).validate().is_ok());
     }
