@@ -98,7 +98,7 @@ mod tests {
             ],
             [("DECLMIG_API_BASE".to_owned(), "https://env.example.test".to_owned())],
         )
-        .expect("resolved configuration");
+        .unwrap_or_default();
         assert_eq!(
             resolved.get("DECLMIG_API_BASE").map(String::as_str),
             Some("https://cli.example.test")
